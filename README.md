@@ -3,9 +3,7 @@
 A personal travel journal for tracking food, activities, lodging, and notes by
 country / state / city — so you never forget what you loved about a trip.
 
-- **Client**: React + TypeScript + Vite + Tailwind CSS
-- **Server**: Express + SQLite (`better-sqlite3`), REST API
-- **Locations**: bundled country/state/city data (`country-state-city`), no external API calls
+<img width="1259" height="357" alt="image" src="https://github.com/user-attachments/assets/e11e0853-06c7-40fd-b7ea-92677ab64ac8" />
 
 ## Running locally
 
