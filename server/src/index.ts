@@ -1,16 +1,22 @@
 import express from 'express'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import path from 'node:path'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { router } from './routes.js'
+import { authRouter } from './auth/routes.js'
+import { requireAuth } from './auth/sessions.js'
+import { authConfig } from './auth/config.js'
 import { db } from './db.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 app.use(cors())
 app.use(express.json())
-app.use('/api', router)
+app.use(cookieParser())
+app.use('/api/auth', authRouter)
+app.use('/api', requireAuth, router)
 
 const publicDir = path.join(__dirname, '..', 'public')
 if (fs.existsSync(publicDir)) {
@@ -23,6 +29,7 @@ if (fs.existsSync(publicDir)) {
 const PORT = process.env.PORT ? Number(process.env.PORT) : 4000
 const server = app.listen(PORT, () => {
   console.log(`Waypoint listening on http://localhost:${PORT}`)
+  console.log(`OIDC SSO: ${authConfig.oidc ? `enabled (${authConfig.oidc.issuerUrl})` : 'disabled'}`)
 })
 
 // Node ignores SIGTERM by default when running as container PID 1, so

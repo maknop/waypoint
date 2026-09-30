@@ -49,6 +49,41 @@ podman run -d --name waypoint -p 4000:4000 -v waypoint-data:/app/data waypoint
 Swap `podman`/`podman-compose` for `docker`/`docker compose` if that's what
 you use — both files are Docker-compatible.
 
+## Authentication
+
+Waypoint requires login, and each account has its own private set of
+entries. By default anyone who can reach your instance can register with an
+email + password. Set `ALLOWED_EMAILS` to a comma-separated list to restrict
+who may register or log in:
+
+```bash
+ALLOWED_EMAILS=you@example.com,partner@example.com
+```
+
+> If you're upgrading an existing instance from before authentication
+> existed, the first person to register becomes the owner of all
+> pre-existing entries. Set `ALLOWED_EMAILS` right after that first
+> registration if you don't want the instance open to further signups.
+
+### Optional: SSO via OIDC
+
+Set these variables to add a "Continue with ..." button backed by any
+standards-compliant OIDC provider (Keycloak, Authentik, Auth0, Okta, Google,
+etc.) alongside the password form. If they're unset, only email/password
+login is shown.
+
+```bash
+OIDC_ISSUER_URL=https://idp.example.com/realms/myrealm
+OIDC_CLIENT_ID=waypoint
+OIDC_CLIENT_SECRET=changeme
+OIDC_REDIRECT_URI=https://waypoint.example.com/api/auth/oidc/callback
+OIDC_DISPLAY_NAME=Keycloak
+```
+
+Other environment variables: `SESSION_TTL_DAYS` (default `30`) and
+`COOKIE_SECURE` (defaults to `true` when `NODE_ENV=production`, set to
+`false` if self-hosting over plain HTTP).
+
 ## Features
 
 - Add entries for **food, activities, lodging, or notes**, each tied to a

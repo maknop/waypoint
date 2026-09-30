@@ -21,4 +21,22 @@ export interface Entry {
 
 export interface EntryRow extends Omit<Entry, 'tags'> {
   tags: string
+  user_id: number
+}
+
+export interface User {
+  id: number
+  email: string
+  password_hash: string | null
+  oidc_subject: string | null
+  oidc_issuer: string | null
+  display_name: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PublicUser {
+  id: number
+  email: string
+  display_name: string | null
 }

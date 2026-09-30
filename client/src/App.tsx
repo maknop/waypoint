@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Compass, Plus } from 'lucide-react'
-import { api, type EntryFilters } from './api'
+import { Compass, LogOut, Plus } from 'lucide-react'
+import { api, type AuthUser, type EntryFilters } from './api'
 import type { Entry, EntryDraft, EntryStatus, EntryType, LocationGroup, Stats } from './types'
 import { LocationSidebar, type LocationFilter } from './components/LocationSidebar'
 import { FilterBar } from './components/FilterBar'
 import { EntryCard } from './components/EntryCard'
 import { EntryForm } from './components/EntryForm'
 
-export default function App() {
+interface AppProps {
+  user: AuthUser
+}
+
+export default function App({ user }: AppProps) {
   const [entries, setEntries] = useState<Entry[]>([])
   const [locations, setLocations] = useState<LocationGroup[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
@@ -66,6 +70,11 @@ export default function App() {
     refreshSidebar()
   }
 
+  async function handleLogout() {
+    await api.logout()
+    window.location.reload()
+  }
+
   const defaultLocation = locationFilter.country_code
     ? {
         country_code: locationFilter.country_code,
@@ -99,12 +108,26 @@ export default function App() {
             </div>
           )}
 
-          <button
-            onClick={() => { setEditing(null); setFormOpen(true) }}
-            className="flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-700"
-          >
-            <Plus size={16} /> Add entry
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { setEditing(null); setFormOpen(true) }}
+              className="flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-700"
+            >
+              <Plus size={16} /> Add entry
+            </button>
+            <div className="hidden items-center gap-2 sm:flex">
+              <span className="max-w-32 truncate text-xs text-stone-500" title={user.email}>
+                {user.display_name ?? user.email}
+              </span>
+              <button
+                onClick={handleLogout}
+                title="Log out"
+                className="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 

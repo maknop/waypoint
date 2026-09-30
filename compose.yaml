@@ -9,6 +9,12 @@ services:
       - waypoint-data:/app/data
     environment:
       - PORT=4000
+      # - ALLOWED_EMAILS=you@example.com,partner@example.com
+      # - OIDC_ISSUER_URL=https://idp.example.com/realms/myrealm
+      # - OIDC_CLIENT_ID=waypoint
+      # - OIDC_CLIENT_SECRET=changeme
+      # - OIDC_REDIRECT_URI=https://waypoint.example.com/api/auth/oidc/callback
+      # - OIDC_DISPLAY_NAME=Keycloak
     restart: unless-stopped
 
 volumes:
