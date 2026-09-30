@@ -5,14 +5,15 @@ import type { Entry, EntryRow } from './types.js'
 export const router = Router()
 
 function rowToEntry(row: EntryRow): Entry {
-  return { ...row, tags: JSON.parse(row.tags || '[]') }
+  const { user_id: _user_id, ...rest } = row
+  return { ...rest, tags: JSON.parse(row.tags || '[]') }
 }
 
 router.get('/entries', (req, res) => {
   const { type, status, country_code, state_code, city_name, tag, q } = req.query as Record<string, string | undefined>
 
-  const clauses: string[] = []
-  const params: Record<string, unknown> = {}
+  const clauses: string[] = ['user_id = @user_id']
+  const params: Record<string, unknown> = { user_id: req.user!.id }
 
   if (type) { clauses.push('type = @type'); params.type = type }
   if (status) { clauses.push('status = @status'); params.status = status }
@@ -25,13 +26,13 @@ router.get('/entries', (req, res) => {
     params.q = `%${q}%`
   }
 
-  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''
+  const where = `WHERE ${clauses.join(' AND ')}`
   const rows = db.prepare(`SELECT * FROM entries ${where} ORDER BY created_at DESC`).all(params) as EntryRow[]
   res.json(rows.map(rowToEntry))
 })
 
 router.get('/entries/:id', (req, res) => {
-  const row = db.prepare('SELECT * FROM entries WHERE id = ?').get(req.params.id) as EntryRow | undefined
+  const row = db.prepare('SELECT * FROM entries WHERE id = ? AND user_id = ?').get(req.params.id, req.user!.id) as EntryRow | undefined
   if (!row) return res.status(404).json({ error: 'Not found' })
   res.json(rowToEntry(row))
 })
@@ -43,9 +44,10 @@ router.post('/entries', (req, res) => {
   }
 
   const info = db.prepare(`
-    INSERT INTO entries (type, title, notes, status, rating, country_code, country_name, state_code, state_name, city_name, tags, link)
-    VALUES (@type, @title, @notes, @status, @rating, @country_code, @country_name, @state_code, @state_name, @city_name, @tags, @link)
+    INSERT INTO entries (user_id, type, title, notes, status, rating, country_code, country_name, state_code, state_name, city_name, tags, link)
+    VALUES (@user_id, @type, @title, @notes, @status, @rating, @country_code, @country_name, @state_code, @state_name, @city_name, @tags, @link)
   `).run({
+    user_id: req.user!.id,
     type: b.type,
     title: b.title,
     notes: b.notes ?? '',
@@ -65,7 +67,7 @@ router.post('/entries', (req, res) => {
 })
 
 router.put('/entries/:id', (req, res) => {
-  const existing = db.prepare('SELECT * FROM entries WHERE id = ?').get(req.params.id) as EntryRow | undefined
+  const existing = db.prepare('SELECT * FROM entries WHERE id = ? AND user_id = ?').get(req.params.id, req.user!.id) as EntryRow | undefined
   if (!existing) return res.status(404).json({ error: 'Not found' })
 
   const b = req.body as Partial<Entry>
@@ -77,9 +79,10 @@ router.put('/entries/:id', (req, res) => {
       country_code = @country_code, country_name = @country_name,
       state_code = @state_code, state_name = @state_name, city_name = @city_name,
       tags = @tags, link = @link, updated_at = datetime('now')
-    WHERE id = @id
+    WHERE id = @id AND user_id = @user_id
   `).run({
     ...merged,
+    user_id: req.user!.id,
     tags: JSON.stringify(merged.tags ?? []),
   })
 
@@ -88,23 +91,24 @@ router.put('/entries/:id', (req, res) => {
 })
 
 router.delete('/entries/:id', (req, res) => {
-  const info = db.prepare('DELETE FROM entries WHERE id = ?').run(req.params.id)
+  const info = db.prepare('DELETE FROM entries WHERE id = ? AND user_id = ?').run(req.params.id, req.user!.id)
   if (info.changes === 0) return res.status(404).json({ error: 'Not found' })
   res.status(204).end()
 })
 
-router.get('/locations', (_req, res) => {
+router.get('/locations', (req, res) => {
   const rows = db.prepare(`
     SELECT country_code, country_name, state_code, state_name, city_name, COUNT(*) as count
     FROM entries
+    WHERE user_id = ?
     GROUP BY country_code, state_code, city_name
     ORDER BY country_name, state_name, city_name
-  `).all()
+  `).all(req.user!.id)
   res.json(rows)
 })
 
-router.get('/tags', (_req, res) => {
-  const rows = db.prepare('SELECT tags FROM entries').all() as { tags: string }[]
+router.get('/tags', (req, res) => {
+  const rows = db.prepare('SELECT tags FROM entries WHERE user_id = ?').all(req.user!.id) as { tags: string }[]
   const counts = new Map<string, number>()
   for (const row of rows) {
     const tags = JSON.parse(row.tags || '[]') as string[]
@@ -113,10 +117,11 @@ router.get('/tags', (_req, res) => {
   res.json([...counts.entries()].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count))
 })
 
-router.get('/stats', (_req, res) => {
-  const total = (db.prepare('SELECT COUNT(*) as c FROM entries').get() as { c: number }).c
-  const favorites = (db.prepare("SELECT COUNT(*) as c FROM entries WHERE status = 'favorite'").get() as { c: number }).c
-  const countries = (db.prepare('SELECT COUNT(DISTINCT country_code) as c FROM entries').get() as { c: number }).c
-  const cities = (db.prepare('SELECT COUNT(DISTINCT city_name) as c FROM entries WHERE city_name IS NOT NULL').get() as { c: number }).c
+router.get('/stats', (req, res) => {
+  const userId = req.user!.id
+  const total = (db.prepare('SELECT COUNT(*) as c FROM entries WHERE user_id = ?').get(userId) as { c: number }).c
+  const favorites = (db.prepare("SELECT COUNT(*) as c FROM entries WHERE user_id = ? AND status = 'favorite'").get(userId) as { c: number }).c
+  const countries = (db.prepare('SELECT COUNT(DISTINCT country_code) as c FROM entries WHERE user_id = ?').get(userId) as { c: number }).c
+  const cities = (db.prepare('SELECT COUNT(DISTINCT city_name) as c FROM entries WHERE user_id = ? AND city_name IS NOT NULL').get(userId) as { c: number }).c
   res.json({ total, favorites, countries, cities })
 })
