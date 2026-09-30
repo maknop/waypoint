@@ -1,0 +1,35 @@
+name: Lint
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            client/package-lock.json
+            server/package-lock.json
+
+      - name: Client — install, lint, build
+        working-directory: client
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+
+      - name: Server — install, lint, build
+        working-directory: server
+        run: |
+          npm ci
+          npm run lint
+          npm run build

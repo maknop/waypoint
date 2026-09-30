@@ -54,8 +54,9 @@ export function LoginPage({ onAuthed }: LoginPageProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-stone-500">Email</label>
+            <label htmlFor="login-email" className="mb-1 block text-xs font-medium text-stone-500">Email</label>
             <input
+              id="login-email"
               type="email"
               required
               autoComplete="email"
@@ -66,8 +67,9 @@ export function LoginPage({ onAuthed }: LoginPageProps) {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-stone-500">Password</label>
+            <label htmlFor="login-password" className="mb-1 block text-xs font-medium text-stone-500">Password</label>
             <input
+              id="login-password"
               type="password"
               required
               minLength={mode === 'register' ? 8 : undefined}

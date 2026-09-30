@@ -1,0 +1,33 @@
+name: Test
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            client/package-lock.json
+            server/package-lock.json
+
+      - name: Client tests
+        working-directory: client
+        run: |
+          npm ci
+          npm test
+
+      - name: Server tests
+        working-directory: server
+        run: |
+          npm ci
+          npm test
