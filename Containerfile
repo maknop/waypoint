@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- build the React client ----
-FROM node:22-slim AS client-build
+FROM node:26-slim AS client-build
 WORKDIR /app/client
 COPY client/package.json client/package-lock.json ./
 RUN npm ci
@@ -9,7 +9,7 @@ COPY client/ ./
 RUN npm run build
 
 # ---- build the API server ----
-FROM node:22-slim AS server-build
+FROM node:26-slim AS server-build
 WORKDIR /app/server
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
@@ -19,7 +19,7 @@ COPY server/ ./
 RUN npm run build
 
 # ---- runtime: one process serves the API and the built client ----
-FROM node:22-slim AS runtime
+FROM node:26-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
