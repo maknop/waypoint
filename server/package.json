@@ -16,11 +16,11 @@
   "license": "ISC",
   "dependencies": {
     "argon2": "^0.45.2",
-    "better-sqlite3": "^13.0.3",
+    "better-sqlite3": "^13.2.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "express": "^5.3.0",
-    "openid-client": "^6.8.9"
+    "openid-client": "^6.9.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",
@@ -29,7 +29,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.6",
     "@types/supertest": "^7.2.1",
-    "oxlint": "^1.92.0",
+    "oxlint": "^1.93.0",
     "supertest": "^7.3.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
